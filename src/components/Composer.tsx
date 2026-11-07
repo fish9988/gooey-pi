@@ -1,6 +1,9 @@
 import { ContextUsageDial } from './composer/ContextUsageDial'
 import { ComposerQueue } from './composer/ComposerQueue'
 import { ComposerAttachments } from './composer/ComposerAttachments'
+import { ClaudeEffortPicker, ClaudeHeroWorkspaceRow, ClaudeInlineSessionStats, ClaudePermissionControl } from './composer/ClaudeComposerBar'
+import { ClaudeReturnIcon, ComposerMascot } from './ClaudeStyleIcons'
+import { useClaudeStylePrefs } from '@/lib/claude-style-prefs'
 import { useComposerSuggestions } from '@/hooks/useComposerSuggestions'
 import { HARNESS_AGENT_NAMES, HARNESS_SHORT_NAMES } from '@/lib/harness'
 import { THINKING_LEVEL_KEYS } from '@/lib/thinking-levels'
@@ -17,6 +20,7 @@ import type {
   PrimeModelDescriptor,
   PrimeProviderDescriptor,
   PrimeThinkingLevel,
+  ProjectRecord,
   SessionUsage,
   PrimeWorkApi,
   PromptDeliveryIntent,
@@ -94,6 +98,12 @@ interface ComposerProps {
   onClearTerminalSelection?(): void
   /** Stable per-workspace key; without it the composer keeps no draft of its own. */
   draftKey?: string
+  /** True when the session has no messages yet (Home / Hero state). */
+  isHero?: boolean
+  activeProject?: ProjectRecord
+  projects?: ProjectRecord[]
+  onSelectProject?(project: ProjectRecord): void
+  onSelectHarness?(harness: HarnessId): void
 }
 
 const EMPTY_ANNOTATIONS: BrowserAnnotation[] = []
@@ -143,8 +153,14 @@ export const Composer = memo(function Composer({
   onClearAnnotations = noop,
   onClearTerminalSelection = noop,
   draftKey,
+  isHero = false,
+  activeProject,
+  projects,
+  onSelectProject,
+  onSelectHarness,
 }: ComposerProps) {
   const { t } = useI18n()
+  const [prefs] = useClaudeStylePrefs()
   const agentName = HARNESS_AGENT_NAMES[harness]
   const shortName = HARNESS_SHORT_NAMES[harness]
   const [value, setValue] = useState(() => readComposerDraft(draftKey ?? 'default')?.text ?? '')
@@ -291,21 +307,36 @@ export const Composer = memo(function Composer({
     }
   }
 
+  const sendDisabled = (!value.trim() && images.length === 0 && textFiles.length === 0 && unsupportedFiles.length === 0 && annotations.length === 0 && !terminalSelection?.text) || processingImages || submitting || loading || disabled
+
   return (
-    <div ref={wrapRef} className="composer-wrap" data-draft-scope={draftKey ?? 'default'}>
+    <div ref={wrapRef} className={`composer-wrap ${isHero ? 'composer-wrap--hero' : 'composer-wrap--inline'}`} data-draft-scope={draftKey ?? 'default'}>
       <ComposerQueue queuedMessages={queuedMessages} harnessQueuedMessageCount={harnessQueuedMessageCount} agentName={agentName} onSendNow={sendQueuedMessageImmediately} onEdit={(queued) => { onEditQueuedMessage?.(queued); setValue((current) => current.trim() ? `${current.trimEnd()}\n\n${queued.text}` : queued.text); requestAnimationFrame(() => textareaRef.current?.focus()) }} onDelete={onDeleteQueuedMessage} />
+      {isHero ? (
+        <ClaudeHeroWorkspaceRow
+          project={activeProject}
+          projects={projects}
+          harness={harness}
+          onSelectProject={onSelectProject}
+          onSelectHarness={onSelectHarness}
+        />
+      ) : null}
       <div
         className={`composer ${busy || submitting ? 'composer--busy' : ''} ${imageAttachments.dragging ? 'composer--image-dragging' : ''}`}
+        data-composer-card=""
+        data-composer-variant={isHero ? 'hero' : 'inline'}
+        data-dsh-claude-draft-empty={sendDisabled ? '' : undefined}
         {...imageAttachments.dragHandlers}
       >
+        {prefs.mascot ? <ComposerMascot brand={prefs.brand} busy={busy || submitting} typing={Boolean(value.trim())} /> : null}
         {imageAttachments.dragging ? <div className="composer-drop-feedback" aria-hidden="true"><Paperclip size={18} />{t('composer.drop')}</div> : null}
-        <div className="composer-input">
+        <div className="composer-input" data-composer-input="">
           <textarea
             ref={textareaRef}
             value={value}
             disabled={disabled || loading}
-            rows={2}
-            placeholder={disabled ? t('composer.placeholder.noProject') : loading ? t('composer.placeholder.loading') : submitting ? t('composer.placeholder.starting', { name: shortName }) : t('composer.placeholder.ask', { name: shortName })}
+            rows={1}
+            placeholder={disabled ? t('composer.placeholder.noProject') : loading ? t('composer.placeholder.loading') : submitting ? t('composer.placeholder.starting', { name: shortName }) : isHero ? 'How can I help you today?' : 'Type / for commands'}
             aria-label={t('composer.input.aria', { name: shortName })}
             role="combobox"
             aria-autocomplete="list"
@@ -347,6 +378,21 @@ export const Composer = memo(function Composer({
 
             }}
           />
+          <div className="composer-input__send" aria-hidden="true">
+            <button
+              type="button"
+              tabIndex={-1}
+              className="dsh-claude-send-btn"
+              disabled={busy ? false : sendDisabled}
+              onClick={() => {
+                if (dictation.state === 'recording') void finishDictation(true)
+                else if (busy) void onStop()
+                else void submit()
+              }}
+            >
+              {busy ? <Square size={10} fill="currentColor" /> : <ClaudeReturnIcon size={14} />}
+            </button>
+          </div>
         </div>
         {menu && suggestions.length ? (
           <div ref={menuRef} id={menuId} className="composer-menu" role="listbox" aria-label={menu === 'command' ? t('composer.menu.commands') : menu === 'mention' ? t('composer.menu.mentions') : t('composer.addContext')}>
@@ -380,11 +426,13 @@ export const Composer = memo(function Composer({
         <p id={imageStatusId} className="sr-only" role="status" aria-live="polite">
           {imageAttachments.dragging ? t('composer.status.drop') : processingImages ? t('composer.status.adding') : images.length + textFiles.length + unsupportedFiles.length ? t('composer.status.filesAttached', { count: images.length + textFiles.length + unsupportedFiles.length }) : ''}
         </p>
-        <div className="composer__footer">
+        <div className="composer__footer" data-dsh-claude-part="row">
           <div className="composer__controls">
+            <ClaudePermissionControl isHero={isHero} />
             <IconButton
               label={t('composer.addContext')}
               data-composer-menu-trigger
+              data-dsh-claude-control="commands"
               aria-expanded={menu === 'add'}
               aria-controls={menu === 'add' ? menuId : undefined}
               onClick={() => {
@@ -392,7 +440,7 @@ export const Composer = memo(function Composer({
                 requestAnimationFrame(() => textareaRef.current?.focus())
               }}
             >
-              <Plus size={17} />
+              <Plus size={16} />
             </IconButton>
             <input
               ref={fileInputRef}
@@ -409,31 +457,41 @@ export const Composer = memo(function Composer({
                 void imageAttachments.ingest(files)
               }}
             />
-            <ModelPicker value={model} modelsByProvider={modelsByProvider} providers={providers} onChange={onModelChange} />
             <ExecutingModelChip executingModel={executingModel} />
-            <SelectControl label={t('composer.effort.label')} compact icon={<Gauge size={12} />} value={effort} onChange={(event) => onEffortChange(event.target.value as PrimeThinkingLevel)}>
-              {reasoningLevels.map((level) => (
-                <option key={level} value={level}>
-                  {t(THINKING_LEVEL_KEYS[level])}
-                </option>
-              ))}
-            </SelectControl>
-            {fastSupported ? (
-              <button
-                type="button"
-                className={`fast-mode-toggle ${fast ? 'is-active' : ''}`}
-                aria-pressed={fast}
-                disabled={!fastAvailable}
-                title={fastAvailable ? t('composer.fast.tooltipAvailable', { name: agentName }) : t('composer.fast.tooltipUnavailable', { name: agentName })}
-                onClick={() => onFastChange(!fast)}
-              >
-                <Zap size={12} fill={fast ? 'currentColor' : 'none'} /> <span className="fast-mode-toggle__label">{t('composer.fast.label')}</span>
-              </button>
-            ) : null}
-            <CheckoutPicker catalog={checkoutCatalog} fallbackLabel={checkoutLabel} loading={checkoutsLoading} onExecute={onExecuteCheckout} />
+            <div className="dsh-claude-legacy-composer-controls">
+              <SelectControl label={t('composer.effort.label')} compact icon={<Gauge size={12} />} value={effort} onChange={(event) => onEffortChange(event.target.value as PrimeThinkingLevel)}>
+                {reasoningLevels.map((level) => (
+                  <option key={level} value={level}>
+                    {t(THINKING_LEVEL_KEYS[level])}
+                  </option>
+                ))}
+              </SelectControl>
+              {fastSupported ? (
+                <button
+                  type="button"
+                  className={`fast-mode-toggle ${fast ? 'is-active' : ''}`}
+                  aria-pressed={fast}
+                  disabled={!fastAvailable}
+                  title={fastAvailable ? t('composer.fast.tooltipAvailable', { name: agentName }) : t('composer.fast.tooltipUnavailable', { name: agentName })}
+                  onClick={() => onFastChange(!fast)}
+                >
+                  <Zap size={12} fill={fast ? 'currentColor' : 'none'} /> <span className="fast-mode-toggle__label">{t('composer.fast.label')}</span>
+                </button>
+              ) : null}
+              <CheckoutPicker catalog={checkoutCatalog} fallbackLabel={checkoutLabel} loading={checkoutsLoading} onExecute={onExecuteCheckout} />
+            </div>
           </div>
-          <div className="composer__actions">
-            {dictation.state === 'connecting' || dictation.state === 'recording' ? <button type="button" className="context-usage-dial context-usage-dial--cancel" aria-label={t('dictation.cancel')} title={t('dictation.cancel')} onClick={dictation.cancel}><X size={14} /></button> : <ContextUsageDial contextUsage={contextUsage} sessionUsage={sessionUsage} />}
+          {!isHero ? <ClaudeInlineSessionStats contextUsage={contextUsage} sessionUsage={sessionUsage} /> : null}
+          <div className="dsh-claude-model-seat">
+            <ModelPicker value={model} modelsByProvider={modelsByProvider} providers={providers} onChange={onModelChange} />
+            <ClaudeEffortPicker effort={effort} levels={reasoningLevels} onChange={onEffortChange} />
+          </div>
+          <div className="composer__actions" data-dsh-claude-part="trailing">
+            {dictation.state === 'connecting' || dictation.state === 'recording' ? (
+              <button type="button" className="context-usage-dial context-usage-dial--cancel" aria-label={t('dictation.cancel')} title={t('dictation.cancel')} onClick={dictation.cancel}><X size={14} /></button>
+            ) : (
+              <ContextUsageDial contextUsage={contextUsage} sessionUsage={sessionUsage} />
+            )}
             <button
               type="button"
               className={`dictation-button ${dictation.state === 'recording' ? 'is-recording' : ''}`}
@@ -444,20 +502,21 @@ export const Composer = memo(function Composer({
               {dictation.state === 'recording' ? <Square size={10} fill="currentColor" /> : dictation.state === 'connecting' || dictation.state === 'transcribing' ? <LoaderCircle className="is-spinning" size={15} /> : <Mic size={15} />}
             </button>
             {dictation.state === 'recording' ? (
-              <button type="button" className="send-button" aria-label={t('composer.send.transcribe')} onClick={() => void finishDictation(true)}><ArrowUp size={17} /></button>
+              <button type="button" className="send-button" data-dsh-claude-control="send" aria-label={t('composer.send.transcribe')} onClick={() => void finishDictation(true)}><ArrowUp size={15} /></button>
             ) : busy ? (
-              <button type="button" className="send-button send-button--stop" aria-label={t('composer.stop', { name: shortName })} onClick={() => void onStop()}>
+              <button type="button" className="send-button send-button--stop" data-dsh-claude-control="stop" aria-label={t('composer.stop', { name: shortName })} onClick={() => void onStop()}>
                 <Square size={10} fill="currentColor" aria-hidden="true" />
               </button>
             ) : (
               <button
                 type="button"
                 className="send-button"
+                data-dsh-claude-control="send"
                 aria-label={t('composer.send')}
-                disabled={(!value.trim() && images.length === 0 && textFiles.length === 0 && unsupportedFiles.length === 0 && annotations.length === 0 && !terminalSelection?.text) || processingImages || submitting || loading || disabled}
+                disabled={sendDisabled}
                 onClick={() => void submit()}
               >
-                <ArrowUp size={17} />
+                <ClaudeReturnIcon size={14} />
               </button>
             )}
           </div>

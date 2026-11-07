@@ -1,0 +1,212 @@
+/* ==========================================================================
+   DSH Claude Style — Fonts & Brand Token Ladder (Claude & DeepSeek)
+   100% faithful replication of Nwflower/dsh-claude-style tokens.json
+   ========================================================================== */
+
+@font-face {
+  font-family: "Claude Style Inter";
+  src: url("/fonts/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Claude Style Noto Serif";
+  src: url("/fonts/NotoSerifVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Claude Style Pixel";
+  src: url("/fonts/ClaudeStylePixel.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMonoVariable.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root,
+body,
+[data-theme="light"] {
+  --dsh-claude-font-sans: "Claude Style Inter", "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Noto Sans SC", "Noto Sans JP", sans-serif;
+  --dsh-claude-font-serif: "Claude Style Noto Serif", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Noto Sans CJK SC", Georgia, serif;
+  --dsh-claude-font-display: "Claude Style Noto Serif", "Iowan Old Style", "Palatino Linotype", "Source Han Serif SC", "Noto Serif CJK SC", Georgia, serif;
+  --dsh-claude-font-mono: "JetBrains Mono", "SF Mono", "Cascadia Code", "Fira Code", Menlo, Consolas, monospace;
+  --dsh-claude-font-pixel: "Claude Style Pixel", "JetBrains Mono", monospace;
+
+  /* Claude Light Card */
+  --dsh-claude-canvas: #ffffff;
+  --dsh-claude-sidebar: #fafafa;
+  --dsh-claude-surface-1: #f6f6f6;
+  --dsh-claude-surface-2: #f0f0f0;
+  --dsh-claude-surface-3: #e7e7e7;
+  --dsh-claude-card: #ffffff;
+  --dsh-claude-input: #ffffff;
+  --dsh-claude-bubble: #f4f2f3;
+  --dsh-claude-code-bg: #f6f6f6;
+
+  --dsh-claude-border: #dedede;
+  --dsh-claude-border-soft: #e9e9e9;
+  --dsh-claude-border-strong: #cfcfcf;
+
+  --dsh-claude-ink-1: #161616;
+  --dsh-claude-ink-2: #70686a;
+  --dsh-claude-ink-3: #91888a;
+  --dsh-claude-ink-4: #b2acad;
+
+  --dsh-claude-accent: #d97757;
+  --dsh-claude-accent-hover: #c46343;
+  --dsh-claude-accent-soft: rgba(217, 119, 87, 0.14);
+  --dsh-claude-accent-ring: rgba(217, 119, 87, 0.28);
+
+  --dsh-claude-shadow-sm: 0 1px 2px rgba(20, 20, 19, 0.04);
+  --dsh-claude-shadow-md: 0 8px 24px -6px rgba(20, 20, 19, 0.07), 0 2px 6px -1px rgba(20, 20, 19, 0.04);
+  --dsh-claude-shadow-composer: 0 2px 10px rgba(0, 0, 0, 0.04);
+  --dsh-claude-shadow-composer-focus: 0 8px 24px -8px rgba(20, 20, 19, 0.10), 0 2px 6px rgba(20, 20, 19, 0.04);
+
+  --dsh-claude-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Syntax tokens (Light) */
+  --dsh-claude-syn-kw: #9d38bd;
+  --dsh-claude-syn-fn: #2463eb;
+  --dsh-claude-syn-str: #2f7d32;
+  --dsh-claude-syn-num: #c25100;
+  --dsh-claude-syn-type: #9a5b13;
+  --dsh-claude-syn-cmt: #91888a;
+}
+
+/* DeepSeek Light Card */
+body[data-dsh-claude-brand="deepseek"],
+[data-theme="light"] body[data-dsh-claude-brand="deepseek"] {
+  --dsh-claude-canvas: #fbfcff;
+  --dsh-claude-sidebar: #f7f9ff;
+  --dsh-claude-surface-1: #f1f4fc;
+  --dsh-claude-surface-2: #e7ecf9;
+  --dsh-claude-surface-3: #dbe2f4;
+  --dsh-claude-card: #ffffff;
+  --dsh-claude-input: #ffffff;
+  --dsh-claude-bubble: #ecf0ff;
+  --dsh-claude-code-bg: #f1f4fc;
+
+  --dsh-claude-border: #d7def0;
+  --dsh-claude-border-soft: #e3e8f6;
+  --dsh-claude-border-strong: #c3cde5;
+
+  --dsh-claude-ink-1: #161616;
+  --dsh-claude-ink-2: #525a6e;
+  --dsh-claude-ink-3: #778099;
+  --dsh-claude-ink-4: #9aa2b8;
+
+  --dsh-claude-accent: #4d6bfe;
+  --dsh-claude-accent-hover: #3b57e6;
+  --dsh-claude-accent-soft: rgba(77, 107, 254, 0.14);
+  --dsh-claude-accent-ring: rgba(77, 107, 254, 0.28);
+}
+
+/* Claude Dark Card */
+[data-theme="dark"],
+[data-theme="dark"] body {
+  --dsh-claude-canvas: #191919;
+  --dsh-claude-sidebar: #1f1f1f;
+  --dsh-claude-surface-1: #212121;
+  --dsh-claude-surface-2: #282828;
+  --dsh-claude-surface-3: #323232;
+  --dsh-claude-card: #232323;
+  --dsh-claude-input: #141414;
+  --dsh-claude-bubble: rgba(255, 255, 255, 0.06);
+  --dsh-claude-code-bg: #141414;
+
+  --dsh-claude-border: rgba(255, 255, 255, 0.18);
+  --dsh-claude-border-soft: rgba(255, 255, 255, 0.09);
+  --dsh-claude-border-strong: rgba(255, 255, 255, 0.30);
+
+  --dsh-claude-ink-1: #fdfdfd;
+  --dsh-claude-ink-2: #beb6b8;
+  --dsh-claude-ink-3: #9c9395;
+  --dsh-claude-ink-4: #776f71;
+
+  --dsh-claude-accent: #d97757;
+  --dsh-claude-accent-hover: #eb9170;
+  --dsh-claude-accent-soft: rgba(217, 119, 87, 0.22);
+  --dsh-claude-accent-ring: rgba(217, 119, 87, 0.36);
+
+  --dsh-claude-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.34);
+  --dsh-claude-shadow-md: 0 14px 34px -8px rgba(0, 0, 0, 0.56), 0 4px 12px -2px rgba(0, 0, 0, 0.38);
+  --dsh-claude-shadow-composer: 0 10px 28px -10px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --dsh-claude-shadow-composer-focus: 0 14px 34px -8px rgba(0, 0, 0, 0.62), 0 3px 8px rgba(0, 0, 0, 0.40);
+
+  /* Syntax tokens (Dark) */
+  --dsh-claude-syn-kw: #d197ff;
+  --dsh-claude-syn-fn: #79b8ff;
+  --dsh-claude-syn-str: #85e89d;
+  --dsh-claude-syn-num: #ffab70;
+  --dsh-claude-syn-type: #f8c555;
+  --dsh-claude-syn-cmt: #776f71;
+}
+
+/* DeepSeek Dark Card */
+[data-theme="dark"] body[data-dsh-claude-brand="deepseek"] {
+  --dsh-claude-canvas: #13161d;
+  --dsh-claude-sidebar: #13161d;
+  --dsh-claude-surface-1: #1a1d24;
+  --dsh-claude-surface-2: #22262f;
+  --dsh-claude-surface-3: #2c313c;
+  --dsh-claude-card: #1f242d;
+  --dsh-claude-input: #292e3b;
+  --dsh-claude-bubble: #262b36;
+  --dsh-claude-code-bg: #171a21;
+
+  --dsh-claude-border: #2c3038;
+  --dsh-claude-border-soft: #23262e;
+  --dsh-claude-border-strong: #3a3d46;
+
+  --dsh-claude-ink-1: #fdfdfd;
+  --dsh-claude-ink-2: #b6bccb;
+  --dsh-claude-ink-3: #8b92a5;
+  --dsh-claude-ink-4: #666d80;
+
+  --dsh-claude-accent: #4d6bfe;
+  --dsh-claude-accent-hover: #6b85ff;
+  --dsh-claude-accent-soft: rgba(77, 107, 254, 0.22);
+  --dsh-claude-accent-ring: rgba(77, 107, 254, 0.36);
+}
+
+/* Bridge DSH Claude Style tokens into GooeyPi's CSS custom properties */
+:root,
+body,
+[data-theme="light"],
+[data-theme="dark"] {
+  --font-sans: var(--dsh-claude-font-sans);
+  --font-mono: var(--dsh-claude-font-mono);
+  --font-display: var(--dsh-claude-font-display);
+
+  --bg-app: var(--dsh-claude-canvas);
+  --bg-canvas: var(--dsh-claude-canvas);
+  --bg-sidebar: var(--dsh-claude-sidebar);
+  --bg-elevated: var(--dsh-claude-card);
+  --bg-subtle: var(--dsh-claude-surface-1);
+  --bg-muted: var(--dsh-claude-surface-2);
+  --bg-hover: var(--dsh-claude-surface-1);
+  --bg-selected: var(--dsh-claude-surface-2);
+
+  --text-primary: var(--dsh-claude-ink-1);
+  --text-secondary: var(--dsh-claude-ink-2);
+  --text-muted: var(--dsh-claude-ink-3);
+  --text-faint: var(--dsh-claude-ink-4);
+
+  --border-subtle: var(--dsh-claude-border-soft);
+  --border-strong: var(--dsh-claude-border);
+
+  --accent: var(--dsh-claude-accent);
+  --accent-soft: var(--dsh-claude-accent-soft);
+}

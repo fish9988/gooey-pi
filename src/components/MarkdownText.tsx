@@ -1,7 +1,9 @@
-import { memo, useEffect, useMemo, useRef, useState, type JSX, type MouseEvent } from 'react'
+import { isValidElement, memo, useEffect, useMemo, useRef, useState, type JSX, type MouseEvent, type ReactNode } from 'react'
+import { Check, Copy, WrapText } from 'lucide-react'
 import type { Components, ExtraProps } from 'react-markdown'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { useCopyFeedback } from '@/hooks/useCopyFeedback'
 import { openExternalUrl } from '@/lib/desktop-actions'
 import { useI18n } from '@/lib/i18n'
 
@@ -49,6 +51,49 @@ function MarkdownImage({ alt }: JSX.IntrinsicElements['img'] & ExtraProps) {
   return <span className="markdown-image-placeholder">{t('markdown.imagePlaceholder', { alt: alt || t('markdown.imageFallbackAlt') })}</span>
 }
 
+function extractCodeMeta(children: ReactNode): { language: string; code: string } {
+  if (isValidElement<{ className?: string; children?: ReactNode }>(children)) {
+    const className = children.props.className ?? ''
+    const match = /language-([\w-]+)/.exec(className)
+    const raw = children.props.children
+    const code = typeof raw === 'string' ? raw.replace(/\n$/, '') : Array.isArray(raw) ? raw.join('').replace(/\n$/, '') : ''
+    return { language: match?.[1] ?? 'text', code }
+  }
+  return { language: 'text', code: '' }
+}
+
+function MarkdownPre({ node: _node, children, ...props }: JSX.IntrinsicElements['pre'] & ExtraProps) {
+  const { copied, copy } = useCopyFeedback()
+  const [wrapped, setWrapped] = useState(false)
+  const { language, code } = extractCodeMeta(children)
+  return (
+    <div className="dsh-claude-codeblock" data-wrap={wrapped ? 'true' : undefined}>
+      <div className="dsh-claude-codeblock__header" aria-hidden="true">
+        <span className="dsh-claude-codeblock__lang">{language}</span>
+        <div className="dsh-claude-codeblock__actions">
+          <button
+            type="button"
+            className="dsh-claude-codeblock__btn"
+            title="Toggle word wrap"
+            onClick={() => setWrapped((current) => !current)}
+          >
+            <WrapText size={13} />
+          </button>
+          <button
+            type="button"
+            className="dsh-claude-codeblock__btn"
+            title="Copy code"
+            onClick={() => { if (code) void copy(code) }}
+          >
+            {copied ? <Check size={13} /> : <Copy size={13} />}
+          </button>
+        </div>
+      </div>
+      <pre {...props} dir="ltr">{children}</pre>
+    </div>
+  )
+}
+
 /**
  * Each block resolves its own base direction from its first strong character.
  * The browser skips descendants that carry their own `dir`, so a paragraph
@@ -68,7 +113,7 @@ const markdownComponents: Components = {
   li: ({ node: _node, ...props }) => <li {...props} dir="auto" />,
   ol: ({ node: _node, ...props }) => <ol {...props} dir="auto" />,
   p: ({ node: _node, ...props }) => <p {...props} dir="auto" />,
-  pre: ({ node: _node, children, ...props }) => <pre {...props} dir="ltr">{children}</pre>,
+  pre: MarkdownPre,
   td: ({ node: _node, ...props }) => <td {...props} dir="auto" />,
   th: ({ node: _node, ...props }) => <th {...props} dir="auto" />,
   ul: ({ node: _node, ...props }) => <ul {...props} dir="auto" />,

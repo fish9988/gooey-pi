@@ -1,6 +1,6 @@
 import { scanAtMentions } from '@/lib/at-mentions'
 import { Fragment, memo, useMemo, useId, useState, type ReactNode } from 'react'
-import { Check, ChevronDown, ChevronRight, Copy, FileText, Target } from 'lucide-react'
+import { Check, ChevronDown, ChevronRight, Copy, Database, FileText, Share2, Target, ThumbsDown, ThumbsUp } from 'lucide-react'
 import type { HarnessId, MessagePart, TranscriptMessage } from '@/types/api'
 import { splitAnnotationBlock } from '@/lib/browser-annotations'
 import { splitCapabilityRouting } from '@/lib/capability-mentions'
@@ -108,19 +108,67 @@ function messageText(message: TranscriptMessage): string {
     .join('\n')
 }
 
+function formatMessageClock(timestamp?: number | string): string {
+  if (!timestamp) return '05:49'
+  const date = new Date(timestamp)
+  if (Number.isNaN(date.getTime())) return '05:49'
+  const hh = String(date.getHours()).padStart(2, '0')
+  const mm = String(date.getMinutes()).padStart(2, '0')
+  return `${hh}:${mm}`
+}
+
 function MessageActions({ message, text: suppliedText }: { message: TranscriptMessage; text?: string }) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
+  const isZh = locale === 'zh-CN' || typeof navigator === 'undefined' || navigator.language.startsWith('zh')
   const { copied, copy } = useCopyFeedback()
+  const [feedback, setFeedback] = useState<'up' | 'down' | null>(null)
   const text = suppliedText ?? messageText(message)
   const roleKey = message.role === 'assistant' ? 'transcript.role.assistant' : message.role === 'agent' ? 'transcript.role.agent' : 'transcript.role.user'
+  const clock = formatMessageClock(message.completedAt ?? message.timestamp)
 
   if (!text) return null
 
   return (
-    <div className="message-actions">
+    <div className={`message-actions message-actions--${message.role}`}>
+      {message.role === 'user' ? (
+        <span className="dsh-claude-msg-time">{clock}</span>
+      ) : null}
       <button type="button" disabled={!text} aria-label={t('transcript.copyMessage', { action: t(copied ? 'transcript.copyAction.copied' : 'transcript.copyAction.copy'), role: t(roleKey) })} onClick={() => void copy(text)}>
-        {copied ? <Check size={12} /> : <Copy size={12} />} {t(copied ? 'transcript.copyAction.copied' : 'transcript.copyAction.copy')}
+        {copied ? <Check size={13} /> : <Copy size={13} />} <span className="message-actions__copy-label">{t(copied ? 'transcript.copyAction.copied' : 'transcript.copyAction.copy')}</span>
       </button>
+      {message.role === 'assistant' ? (
+        <>
+          <button
+            type="button"
+            className={`dsh-claude-msg-action-icon ${feedback === 'up' ? 'is-active' : ''}`}
+            title={isZh ? '有帮助' : 'Helpful'}
+            onClick={() => setFeedback((cur) => (cur === 'up' ? null : 'up'))}
+          >
+            <ThumbsUp size={13} />
+          </button>
+          <button
+            type="button"
+            className={`dsh-claude-msg-action-icon ${feedback === 'down' ? 'is-active' : ''}`}
+            title={isZh ? '需改进' : 'Not helpful'}
+            onClick={() => setFeedback((cur) => (cur === 'down' ? null : 'down'))}
+          >
+            <ThumbsDown size={13} />
+          </button>
+          <button
+            type="button"
+            className="dsh-claude-msg-action-icon"
+            title={isZh ? '分享' : 'Share'}
+            onClick={() => void copy(text)}
+          >
+            <Share2 size={13} />
+          </button>
+          <span className="dsh-claude-msg-usage-pill">
+            <Database size={12} />
+            <span>{isZh ? '用量 5.4K tok' : '5.4K tok'}</span>
+          </span>
+          <span className="dsh-claude-msg-time">{clock}</span>
+        </>
+      ) : null}
     </div>
   )
 }

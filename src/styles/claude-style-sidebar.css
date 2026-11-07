@@ -1,0 +1,447 @@
+/* ==========================================================================
+   DSH Claude Style — Sidebar, Header View Switcher & Studio Home Dashboard
+   ========================================================================== */
+
+/* 1. Left Sidebar Layout & Brand Lockup */
+.sidebar {
+  background: var(--dsh-claude-sidebar);
+  border-right: 1px solid var(--dsh-claude-border-soft);
+  font-family: var(--dsh-claude-font-sans);
+}
+
+.sidebar__titlebar {
+  height: 44px;
+  padding: 0 10px 0 12px;
+}
+
+.brand-switcher__trigger {
+  gap: 6px;
+  padding: 4px 7px;
+  border-radius: 7px;
+}
+
+.brand-switcher__trigger > .harness-mark,
+.brand-switcher__trigger > .brand-switcher__name {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.dsh-claude-brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--dsh-claude-ink-1);
+}
+
+.dsh-claude-wordmark {
+  display: block;
+  transform: translateY(0.5px);
+}
+
+.dsh-claude-menu-divider {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--dsh-claude-border-soft);
+}
+
+/* Primary Nav Rows (28px compact Claude Desktop style) */
+.sidebar__primary {
+  padding: 2px 8px 6px;
+  gap: 1px;
+}
+
+.sidebar__primary > button,
+.dsh-claude-more-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 7px;
+  border: 0;
+  background: transparent;
+  color: var(--dsh-claude-ink-2);
+  font-size: 13px;
+  font-weight: 450;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.sidebar__primary > button:hover,
+.dsh-claude-more-row:hover {
+  background: var(--dsh-claude-surface-1);
+  color: var(--dsh-claude-ink-1);
+}
+
+.sidebar__primary > button.is-active {
+  background: var(--dsh-claude-surface-2);
+  color: var(--dsh-claude-ink-1);
+  font-weight: 500;
+}
+
+.sidebar__primary > button[data-dsh-hidden="true"] {
+  display: none;
+}
+
+/* Hide Search/Projects/Activity/Scheduled by default in clean Claude sidebar unless active,
+   leaving "+ 新会话", "✦ 插件", and "••• 更多" just like Nwflower/dsh-claude-style */
+body[data-dsh-claude-sidebar-layout="projects"] .sidebar__primary > button[data-dsh-entry="search"]:not(.is-active),
+body[data-dsh-claude-sidebar-layout="projects"] .sidebar__primary > button[data-dsh-entry="projects"]:not(.is-active),
+body[data-dsh-claude-sidebar-layout="projects"] .sidebar__primary > button[data-dsh-entry="activity"]:not(.is-active),
+body[data-dsh-claude-sidebar-layout="projects"] .sidebar__primary > button[data-dsh-entry="scheduled"]:not(.is-active) {
+  display: none;
+}
+
+/* "+ 新会话" Circular Plus Chip */
+.dsh-claude-new-session-btn > svg {
+  display: none;
+}
+
+.dsh-claude-new-session-btn > kbd {
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.dsh-claude-new-session-btn:hover > kbd {
+  opacity: 0.7;
+}
+
+.dsh-claude-plus-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--dsh-claude-accent-soft);
+  color: var(--dsh-claude-accent);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  transition: transform 220ms var(--dsh-claude-ease), background-color 150ms ease, color 150ms ease;
+}
+
+.dsh-claude-new-session-btn:hover .dsh-claude-plus-chip {
+  transform: rotate(90deg);
+  background: var(--dsh-claude-accent);
+  color: #ffffff;
+}
+
+/* Workspace Section & Project Rows */
+.sidebar__section-heading {
+  padding: 10px 10px 4px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--dsh-claude-ink-3);
+}
+
+.project-group {
+  margin-bottom: 2px;
+}
+
+.project-row {
+  min-height: 28px;
+  height: 28px;
+  padding: 0 6px 0 8px;
+  border-radius: 7px;
+}
+
+/* Hide folder icon on project row for clean Claude Desktop folder-less headers */
+.project-row__main > svg:first-child {
+  display: none;
+}
+
+.project-row__main {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsh-claude-ink-2);
+}
+
+.project-row:hover .project-row__main,
+.project-row.is-selected .project-row__main {
+  color: var(--dsh-claude-ink-1);
+}
+
+/* Session Rows (single-line 28px with right-aligned relative time) */
+.session-list {
+  margin: 1px 0 4px 10px;
+  padding-left: 8px;
+  border-left: 1px solid var(--dsh-claude-border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.session-row-wrap {
+  min-height: 28px;
+  height: 28px;
+  border-radius: 7px;
+  padding-right: 4px;
+}
+
+.session-row {
+  min-height: 28px;
+  height: 28px;
+  padding: 0 8px;
+  gap: 7px;
+  align-items: center;
+}
+
+.session-row__text {
+  display: flex;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.session-row__title {
+  font-size: 12.5px;
+  font-weight: 430;
+  color: var(--dsh-claude-ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-row-wrap.is-selected .session-row__title,
+.session-row-wrap:hover .session-row__title {
+  color: var(--dsh-claude-ink-1);
+  font-weight: 500;
+}
+
+.session-row__meta {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--dsh-claude-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.session-row-wrap:hover .session-row__meta {
+  opacity: 0;
+}
+
+/* Hollow 6x6 dot for idle/draft sessions */
+.session-status-mark--idle > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: transparent !important;
+  border: 1.35px solid var(--dsh-claude-ink-3);
+}
+
+.session-row-wrap.is-selected .session-status-mark--idle > span {
+  border-color: var(--dsh-claude-ink-1);
+}
+
+/* Sidebar Footer & Account Bar */
+.sidebar__footer {
+  padding: 6px 8px 8px;
+  border-top: 1px solid var(--dsh-claude-border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar__footer-legacy-btn {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.dsh-claude-more-wrap,
+.dsh-claude-account-wrap {
+  position: relative;
+}
+
+.dsh-claude-account-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 36px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--dsh-claude-ink-1);
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.dsh-claude-account-bar:hover {
+  background: var(--dsh-claude-surface-1);
+}
+
+.dsh-claude-account-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--dsh-claude-surface-3);
+  color: var(--dsh-claude-ink-1);
+  font-size: 11.5px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.dsh-claude-account-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsh-claude-ink-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dsh-claude-account-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--dsh-claude-ink-4);
+  margin-left: 2px;
+}
+
+.dsh-claude-account-gear {
+  margin-left: auto;
+  color: var(--dsh-claude-ink-3);
+}
+
+.dsh-claude-sidebar-editor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.dsh-claude-sidebar-editor-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--dsh-claude-ink-1);
+  cursor: pointer;
+}
+
+.dsh-claude-sidebar-editor-row:hover {
+  background: var(--dsh-claude-surface-1);
+}
+
+/* 2. Top Conversation Header & Segmented View Switcher ("对话 | 轨迹") */
+.title-toolbar {
+  height: 44px;
+  background: var(--dsh-claude-canvas);
+  border-bottom: 1px solid var(--dsh-claude-border-soft);
+  position: relative;
+}
+
+.title-toolbar--hero {
+  border-bottom-color: transparent;
+}
+
+.title-toolbar--hero .title-toolbar__identity,
+.title-toolbar--hero .title-toolbar__actions {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.title-toolbar__identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title-toolbar__identity > strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dsh-claude-ink-1);
+}
+
+.dsh-claude-header-mode-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--dsh-claude-ink-3);
+}
+
+.dsh-claude-header-tabs {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+}
+
+.dsh-claude-view-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--dsh-claude-surface-2);
+  border: 1px solid var(--dsh-claude-border-soft);
+}
+
+.dsh-claude-view-switch > button {
+  border: 0;
+  background: transparent;
+  color: var(--dsh-claude-ink-3);
+  font-family: var(--dsh-claude-font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 4px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background-color 140ms var(--dsh-claude-ease), color 140ms var(--dsh-claude-ease), box-shadow 140ms var(--dsh-claude-ease);
+}
+
+.dsh-claude-view-switch > button:hover {
+  color: var(--dsh-claude-ink-1);
+}
+
+.dsh-claude-view-switch > button[aria-selected="true"] {
+  background: var(--dsh-claude-card);
+  color: var(--dsh-claude-ink-1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.dsh-claude-header-folder-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 26px;
+  padding: 0 7px;
+  border-radius: 7px;
+  color: var(--dsh-claude-ink-2);
+}
+

@@ -1,0 +1,562 @@
+/* ==========================================================================
+   DSH Claude Style — Studio Home Dashboard & Floating Popover Cards
+   ========================================================================== */
+
+/* 1. Studio Home Usage Dashboard (ClaudeHomeDashboard) */
+.transcript--hero .transcript__inner {
+  max-width: 740px;
+  padding-top: 8px;
+  padding-bottom: 12px;
+}
+
+.dsh-claude-studio-home {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 4px 12px 0;
+  text-align: left;
+  align-items: stretch;
+}
+
+.dsh-claude-studio-home__greeting {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.dsh-claude-studio-home__mark {
+  display: none;
+}
+
+.dsh-claude-studio-home__greeting > h1 {
+  margin: 0;
+  font-family: var(--dsh-claude-font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--dsh-claude-ink-1);
+}
+
+.dsh-claude-home-panel {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dsh-claude-home-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--dsh-claude-border-soft);
+  padding-bottom: 5px;
+}
+
+.dsh-claude-home-tabs,
+.dsh-claude-home-ranges {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dsh-claude-home-tab {
+  position: relative;
+  border: 0;
+  background: transparent;
+  padding: 3px 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--dsh-claude-ink-3);
+  cursor: pointer;
+}
+
+.dsh-claude-home-tab[data-active] {
+  color: var(--dsh-claude-ink-1);
+  font-weight: 600;
+}
+
+.dsh-claude-home-tab[data-active]::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: -6px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: var(--dsh-claude-ink-1);
+}
+
+.dsh-claude-home-range {
+  border: 0;
+  background: transparent;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dsh-claude-ink-3);
+  cursor: pointer;
+}
+
+.dsh-claude-home-range[data-active] {
+  background: var(--dsh-claude-surface-2);
+  color: var(--dsh-claude-ink-1);
+}
+
+.dsh-claude-home-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px 12px;
+  padding: 2px 0;
+}
+
+.dsh-claude-home-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 3px 4px;
+}
+
+.dsh-claude-home-stat-label {
+  font-size: 10.5px;
+  color: var(--dsh-claude-ink-3);
+}
+
+.dsh-claude-home-stat-value {
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--dsh-claude-ink-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.dsh-claude-home-stat[data-stat="model"] .dsh-claude-home-stat-value {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* 7x22 Heat Grid (#3b6ecf blue ramp matching Nwflower/dsh-claude-style) */
+.dsh-claude-home-heat {
+  position: relative;
+  display: grid;
+  grid-template-rows: repeat(7, 10px);
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 2.5px;
+  padding: 4px 0 2px;
+}
+
+.dsh-claude-home-heat-cell {
+  width: 100%;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--dsh-claude-surface-2);
+  transition: transform 90ms ease;
+}
+
+.dsh-claude-home-heat-cell:hover {
+  transform: scale(1.22);
+}
+
+.dsh-claude-home-heat-cell[data-level="1"] {
+  background: rgba(59, 110, 207, 0.25);
+}
+
+.dsh-claude-home-heat-cell[data-level="2"] {
+  background: rgba(59, 110, 207, 0.48);
+}
+
+.dsh-claude-home-heat-cell[data-level="3"] {
+  background: rgba(59, 110, 207, 0.72);
+}
+
+.dsh-claude-home-heat-cell[data-level="4"] {
+  background: #3b6ecf;
+}
+
+.dsh-claude-home-heat-hint {
+  position: absolute;
+  left: var(--dsh-claude-heat-tip-x, 0px);
+  top: var(--dsh-claude-heat-tip-y, -24px);
+  z-index: 10;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--dsh-claude-ink-1);
+  color: var(--dsh-claude-canvas);
+  font-size: 10.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.dsh-claude-home-heat-hint[data-shown] {
+  opacity: 1;
+}
+
+.dsh-claude-home-fun {
+  font-size: 10.5px;
+  color: var(--dsh-claude-ink-3);
+  text-align: center;
+  padding-top: 2px;
+}
+
+/* Models Stacked Bar Chart & Breakdown List */
+.dsh-claude-home-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0 2px;
+}
+
+.dsh-claude-home-chart-plot {
+  position: relative;
+  height: 78px;
+  padding-left: 32px;
+  border-bottom: 1px solid var(--dsh-claude-border-soft);
+}
+
+.dsh-claude-home-chart-tick {
+  position: absolute;
+  left: 0;
+  transform: translateY(50%);
+  font-size: 9.5px;
+  color: var(--dsh-claude-ink-4);
+  font-variant-numeric: tabular-nums;
+}
+
+.dsh-claude-home-chart-bars {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  align-items: end;
+  gap: 4px;
+  height: 100%;
+}
+
+.dsh-claude-home-chart-col {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  overflow: hidden;
+}
+
+.dsh-claude-home-chart-seg[data-rank="0"],
+.dsh-claude-home-model-swatch[data-rank="0"] {
+  background: #3b6ecf;
+}
+
+.dsh-claude-home-chart-seg[data-rank="1"],
+.dsh-claude-home-model-swatch[data-rank="1"] {
+  background: var(--dsh-claude-accent);
+}
+
+.dsh-claude-home-chart-seg[data-rank="2"],
+.dsh-claude-home-model-swatch[data-rank="2"] {
+  background: #7b96d4;
+}
+
+.dsh-claude-home-chart-seg[data-rank="3"],
+.dsh-claude-home-model-swatch[data-rank="3"] {
+  background: var(--dsh-claude-ink-4);
+}
+
+.dsh-claude-home-chart-axis {
+  position: relative;
+  height: 14px;
+  margin-left: 32px;
+  font-size: 9.5px;
+  color: var(--dsh-claude-ink-3);
+}
+
+.dsh-claude-home-chart-label {
+  position: absolute;
+  top: 0;
+}
+
+.dsh-claude-home-models {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+.dsh-claude-home-model {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--dsh-claude-ink-2);
+}
+
+.dsh-claude-home-model-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.dsh-claude-home-model-name {
+  font-weight: 500;
+  color: var(--dsh-claude-ink-1);
+}
+
+.dsh-claude-home-model-split {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--dsh-claude-ink-3);
+}
+
+.dsh-claude-home-model-share {
+  width: 38px;
+  text-align: right;
+  font-family: var(--dsh-claude-font-mono);
+  font-size: 10.5px;
+  color: var(--dsh-claude-ink-2);
+}
+
+/* 2. Unified Floating Popover Cards */
+.dsh-claude-popover-card {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 60;
+  min-width: 220px;
+  border-radius: 12px;
+  background: var(--dsh-claude-card);
+  border: 1px solid var(--dsh-claude-border);
+  box-shadow: var(--dsh-claude-shadow-md);
+  padding: 5px;
+  color: var(--dsh-claude-ink-1);
+  font-family: var(--dsh-claude-font-sans);
+}
+
+.dsh-claude-hero-popover {
+  bottom: auto;
+  top: calc(100% + 6px);
+}
+
+.dsh-claude-more-popover {
+  bottom: auto;
+  top: calc(100% + 4px);
+  left: 8px;
+  min-width: 200px;
+}
+
+.dsh-claude-account-popover {
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  min-width: 228px;
+}
+
+.dsh-claude-effort-popover {
+  left: auto;
+  right: 0;
+  min-width: 236px;
+  padding: 10px 12px;
+}
+
+.dsh-claude-stats-popover {
+  min-width: 248px;
+  padding: 10px 12px;
+}
+
+.dsh-claude-popover-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px 8px;
+  border-bottom: 1px solid var(--dsh-claude-border-soft);
+  margin-bottom: 4px;
+}
+
+.dsh-claude-popover-header-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--dsh-claude-ink-1);
+}
+
+.dsh-claude-popover-header-sub {
+  font-size: 11px;
+  color: var(--dsh-claude-ink-3);
+}
+
+.dsh-claude-popover-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.dsh-claude-popover-footer {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--dsh-claude-border-soft);
+}
+
+.dsh-claude-popover-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--dsh-claude-ink-1);
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dsh-claude-popover-item:hover {
+  background: var(--dsh-claude-surface-1);
+}
+
+.dsh-claude-popover-item-icon {
+  display: inline-flex;
+  color: var(--dsh-claude-ink-2);
+}
+
+.dsh-claude-popover-item-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+}
+
+.dsh-claude-popover-item-text {
+  font-weight: 500;
+  color: var(--dsh-claude-ink-1);
+}
+
+.dsh-claude-popover-item-desc {
+  font-size: 11px;
+  color: var(--dsh-claude-ink-3);
+}
+
+.dsh-claude-popover-check {
+  margin-left: auto;
+  color: var(--dsh-claude-accent);
+}
+
+/* Reasoning Effort Slider inside Popover */
+.dsh-claude-effort {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dsh-claude-effort-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.dsh-claude-effort-label {
+  color: var(--dsh-claude-ink-2);
+  font-weight: 500;
+}
+
+.dsh-claude-effort-value {
+  color: var(--dsh-claude-accent);
+  font-weight: 600;
+}
+
+.dsh-claude-effort-track {
+  position: relative;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--dsh-claude-surface-2);
+  border: 1px solid var(--dsh-claude-border-soft);
+  cursor: pointer;
+}
+
+.dsh-claude-effort-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 999px;
+  background: var(--dsh-claude-accent-soft);
+}
+
+.dsh-claude-effort-ticks {
+  position: absolute;
+  inset: 0;
+}
+
+.dsh-claude-effort-tick {
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--dsh-claude-ink-4);
+  transform: translate(-50%, -50%);
+}
+
+.dsh-claude-effort-knob {
+  position: absolute;
+  top: 2px;
+  width: 26px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--dsh-claude-accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+}
+
+.dsh-claude-effort-ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: var(--dsh-claude-ink-3);
+}
+
+/* Session Context Stats 2x2 Grid */
+.dsh-claude-context-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dsh-claude-context-stats-section {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--dsh-claude-ink-3);
+}
+
+.dsh-claude-context-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dsh-claude-context-stats-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: var(--dsh-claude-surface-1);
+}
+
+.dsh-claude-context-stats-label {
+  font-size: 10.5px;
+  color: var(--dsh-claude-ink-3);
+}
+
+.dsh-claude-context-stats-value {
+  font-family: var(--dsh-claude-font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--dsh-claude-ink-1);
+}

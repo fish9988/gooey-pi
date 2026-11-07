@@ -1,5 +1,7 @@
-import { Check, Laptop, Moon, Sun } from 'lucide-react'
+import { Check, Laptop, Moon, LayoutDashboard, Sparkles, Sun } from 'lucide-react'
 import type { KeyboardEvent } from 'react'
+import { ClaudeStarburstMark, DeepSeekWhaleMark } from '@/components/ClaudeStyleIcons'
+import { useClaudeStylePrefs } from '@/lib/claude-style-prefs'
 import { useI18n, type MessageKey } from '@/lib/i18n'
 import { LOCALE_PREFERENCES, type InterfaceFontScale, type LocalePreference, type ThemeMode } from '@/types/api'
 import type { SettingsSectionProps } from './contracts'
@@ -40,7 +42,9 @@ function nextScaleIndex(key: string, current: number, count: number): number | n
 }
 
 export function AppearanceSettings({ settings, onUpdate }: SettingsSectionProps) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
+  const isZh = locale === 'zh-CN'
+  const [claudePrefs, updateClaudePrefs] = useClaudeStylePrefs()
   const selectedScale = Math.max(0, fontScales.findIndex((option) => option.value === settings.interfaceFontScale))
   const onScaleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const next = nextScaleIndex(event.key, selectedScale, fontScales.length)
@@ -65,6 +69,55 @@ export function AppearanceSettings({ settings, onUpdate }: SettingsSectionProps)
             )
           })}
         </div>
+      </section>
+      <section className="settings-group">
+        <h2>{isZh ? 'DSH Claude Style 品牌与主页' : 'DSH Claude Style Brand & Home'}</h2>
+        <div className="theme-options">
+          <button
+            type="button"
+            className={claudePrefs.brand === 'claude' ? 'is-active' : ''}
+            onClick={() => updateClaudePrefs({ brand: 'claude' })}
+          >
+            <span><ClaudeStarburstMark size={17} /></span>
+            <strong>Claude Terracotta</strong>
+            {claudePrefs.brand === 'claude' ? <Check size={13} /> : null}
+          </button>
+          <button
+            type="button"
+            className={claudePrefs.brand === 'deepseek' ? 'is-active' : ''}
+            onClick={() => updateClaudePrefs({ brand: 'deepseek' })}
+          >
+            <span><DeepSeekWhaleMark size={17} /></span>
+            <strong>DeepSeek Cobalt</strong>
+            {claudePrefs.brand === 'deepseek' ? <Check size={13} /> : null}
+          </button>
+        </div>
+        <div className="theme-options" style={{ marginTop: 10 }}>
+          <button
+            type="button"
+            className={claudePrefs.homeLayout === 'studio' ? 'is-active' : ''}
+            onClick={() => updateClaudePrefs({ homeLayout: 'studio' })}
+          >
+            <span><LayoutDashboard size={17} /></span>
+            <strong>{isZh ? 'Studio 用量仪表盘' : 'Studio Dashboard'}</strong>
+            {claudePrefs.homeLayout === 'studio' ? <Check size={13} /> : null}
+          </button>
+          <button
+            type="button"
+            className={claudePrefs.homeLayout === 'classic' ? 'is-active' : ''}
+            onClick={() => updateClaudePrefs({ homeLayout: 'classic' })}
+          >
+            <span><Sparkles size={17} /></span>
+            <strong>{isZh ? 'Classic 经典欢迎页' : 'Classic Welcome'}</strong>
+            {claudePrefs.homeLayout === 'classic' ? <Check size={13} /> : null}
+          </button>
+        </div>
+        <SettingsToggle
+          checked={claudePrefs.mascot}
+          onChange={(mascot) => updateClaudePrefs({ mascot })}
+          label={isZh ? '显示输入框像素吉祥物 (Clawd / Deepy)' : 'Show composer pixel mascot (Clawd / Deepy)'}
+          description={isZh ? '在输入框右上角显示可互动的像素小螃蟹或小鲸鱼' : 'Display interactive pixel mascot perched on the top-right edge of the composer'}
+        />
       </section>
       <section className="settings-group">
         <h2>{t('appearance.language.title')}</h2>

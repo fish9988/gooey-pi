@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
 import { LoaderCircle } from 'lucide-react'
-import type { HarnessId, TranscriptMessage } from '@/types/api'
+import type { HarnessId, SessionRecord, TranscriptMessage } from '@/types/api'
 import { ErrorBoundary } from './ErrorBoundary'
 import { MarkdownText } from './MarkdownText'
 import { HARNESS_SHORT_NAMES } from '@/lib/harness'
 import { useI18n } from '@/lib/i18n'
+import { useClaudeStylePrefs } from '@/lib/claude-style-prefs'
+import { ClaudeHomeDashboard } from './ClaudeHomeDashboard'
 import { HarnessMark } from './HarnessMark'
 import { ActivityMessage, AgentMessage, AssistantMessage, GoalMessage, SteerReadMarker, UserMessage } from './transcript/messages'
 import { useTranscriptScroll } from './transcript/scroll'
@@ -34,6 +36,7 @@ export function coalesceAssistantTurns(messages: TranscriptMessage[]): Transcrip
 
 interface TranscriptProps {
   messages: TranscriptMessage[]
+  sessions?: SessionRecord[]
   /** Active harness; brands the assistant marks and working copy. */
   harness?: HarnessId
   loading?: boolean
@@ -69,33 +72,34 @@ function ActiveAssistantMessage({ message, harness, showReasoning, showTools }: 
 
 
 
-export function Transcript({ messages, harness = 'prime', loading, active = false, showReasoning = true, showTools = true, onSuggestion, suggestionsDisabled, bottomDockHasChanges = false, queuedMessageCount = 0, onOpenSessionReference }: TranscriptProps) {
+export function Transcript({ messages, sessions, harness = 'prime', loading, active = false, showReasoning = true, showTools = true, onSuggestion, suggestionsDisabled, bottomDockHasChanges = false, queuedMessageCount = 0, onOpenSessionReference }: TranscriptProps) {
   const { t } = useI18n()
+  const [prefs] = useClaudeStylePrefs()
   const groupedMessages = useMemo(() => coalesceAssistantTurns(messages), [messages])
   const { announcement, hiddenCount, scrollRef, showEarlier, updatePinnedState, visibleMessages } = useTranscriptScroll(groupedMessages, HARNESS_SHORT_NAMES[harness])
   const activeAssistantId = useMemo(() => active && groupedMessages.at(-1)?.role === 'assistant' ? groupedMessages.at(-1)?.id : undefined, [active, groupedMessages])
+  const isHero = !loading && messages.length === 0
   const transcriptClasses = [
     'transcript',
     'scroll-area',
+    isHero ? 'transcript--hero' : '',
     bottomDockHasChanges ? 'has-docked-changes' : '',
     queuedMessageCount > 0 ? 'has-queued-messages' : '',
   ].filter(Boolean).join(' ')
 
-  return <>
-    <div ref={scrollRef} className={transcriptClasses} aria-busy={loading} onScroll={updatePinnedState}>
+  return (
+    <div ref={scrollRef} className={transcriptClasses} data-view-tab={prefs.viewTab} aria-busy={loading} onScroll={updatePinnedState}>
       <div className="sr-only" role="status" aria-live="polite">{announcement}</div>
       <div className="transcript__inner">
         {loading ? <div className="transcript-loading"><LoaderCircle className="spin" size={16} /> {t('transcript.loadingSession')}</div> : null}
-        {!loading && messages.length === 0 ? <div className="session-welcome">
-          <HarnessMark harness={harness} size={34} />
-          <h1>{t('transcript.welcome.title')}</h1>
-          <p>{t('transcript.welcome.description', { harness: HARNESS_SHORT_NAMES[harness] })}</p>
-          <div className="prompt-suggestions">
-            <button type="button" disabled={suggestionsDisabled} onClick={() => onSuggestion(t('transcript.suggestion.summarize'))}>{t('transcript.suggestion.summarize')}</button>
-            <button type="button" disabled={suggestionsDisabled} onClick={() => onSuggestion(t('transcript.suggestion.nextTask'))}>{t('transcript.suggestion.nextTask')}</button>
-            <button type="button" disabled={suggestionsDisabled} onClick={() => onSuggestion(t('transcript.suggestion.tests'))}>{t('transcript.suggestion.tests')}</button>
-          </div>
-        </div> : null}
+        {isHero ? (
+          <ClaudeHomeDashboard
+            harness={harness}
+            sessions={sessions}
+            onSuggestion={onSuggestion}
+            suggestionsDisabled={suggestionsDisabled}
+          />
+        ) : null}
         {hiddenCount > 0 ? <button type="button" className="transcript__show-earlier" onClick={showEarlier}>{t('transcript.showEarlier', { count: Math.min(250, hiddenCount) })}</button> : null}
         {visibleMessages.map((message) => <ErrorBoundary key={message.id} fallback={<div className="message message--render-failure" role="note">{t('transcript.renderFailure')}</div>}>
           {message.kind === 'steer-read-marker' ? <SteerReadMarker message={message} />
@@ -114,5 +118,5 @@ export function Transcript({ messages, harness = 'prime', loading, active = fals
         <div />
       </div>
     </div>
-  </>
+  )
 }

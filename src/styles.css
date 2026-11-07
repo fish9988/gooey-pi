@@ -13,3 +13,7 @@
 @import './styles/settings.css';
 @import './styles/overlays.css';
 @import './styles/responsive.css';
+@import './styles/claude-style-tokens.css';
+@import './styles/claude-style-sidebar.css';
+@import './styles/claude-style-surfaces.css';
+@import './styles/claude-style-home-popovers.css';

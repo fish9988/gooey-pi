@@ -42,6 +42,8 @@ import { ChildSessionRows, type ChildRosterView } from './ChildSessionRows'
 import { IconButton, Modal, useFocusTrap } from './ui'
 import { HarnessMark } from './HarnessMark'
 import { useDismissableLayer } from '@/hooks/useDismissableLayer'
+import { ClaudeBrandLockup, ClaudeStarburstMark, DeepSeekWhaleMark } from './ClaudeStyleIcons'
+import { type ClaudeSidebarEntryId, useClaudeStylePrefs } from '@/lib/claude-style-prefs'
 
 const PROJECT_SORT_LABEL_KEYS = { recent: 'projects.sort.recent', alphabetical: 'projects.sort.alphabetical' } as const satisfies Record<ProjectSortMode, MessageKey>
 
@@ -176,7 +178,9 @@ function updateConfirmCopy(state: AppUpdateState, t: Translate): { title: string
 }
 
 function SidebarView({ projects, sessions, childRoster, activeProjectId, activeSessionId, activeView, activeHarness = 'omp', harnesses, clearedAttention = {}, updateState = { phase: 'unsupported' }, onUpdateAction, onSelectHarness, onSelectProject, onSelectSession, onNavigate, onNewSession, onAddProject, onRemoveProject, projectSortMode = 'recent', onSetProjectSortMode = () => undefined, onTogglePinProject = () => undefined, onClose, onOpenPalette, onRenameSession, onArchiveSession, overlay = false, platform = 'darwin' }: SidebarProps) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
+  const [claudePrefs, updateClaudePrefs] = useClaudeStylePrefs()
+  const isZh = locale === 'zh-CN' || typeof navigator === 'undefined' || navigator.language.startsWith('zh')
   // Session titles are record data; only the main-process placeholder is
   // presented in the interface language (see `src/lib/session-title.ts`).
   const displayTitle = (title: string): string => sessionTitleText(title, t)
@@ -184,6 +188,9 @@ function SidebarView({ projects, sessions, childRoster, activeProjectId, activeS
   const { toast: copyError, setToast: setCopyError } = useToast()
   const { copied, copy } = useCopyFeedback(undefined, (error) => setCopyError(errorMessage(error)))
   const [harnessMenuOpen, setHarnessMenuOpen] = useState(false)
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  const [editSidebarOpen, setEditSidebarOpen] = useState(false)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [sessionLimits, setSessionLimits] = useState<Record<string, number>>({})
   const [searchOpen, setSearchOpen] = useState(false)
@@ -218,6 +225,8 @@ function SidebarView({ projects, sessions, childRoster, activeProjectId, activeS
   const updateIndeterminate = updateState.phase === 'downloading' && updateState.percent === undefined
   const updateVisible = updateState.phase === 'available' || updateState.phase === 'downloading' || updateState.phase === 'downloaded' || updateState.phase === 'error'
   useDismissableLayer(harnessMenuOpen, (target) => target instanceof Element && Boolean(target.closest('.brand-switcher')), () => setHarnessMenuOpen(false))
+  useDismissableLayer(moreMenuOpen, (target) => target instanceof Element && Boolean(target.closest('.dsh-claude-more-wrap')), () => setMoreMenuOpen(false))
+  useDismissableLayer(accountMenuOpen, (target) => target instanceof Element && Boolean(target.closest('.dsh-claude-account-wrap')), () => setAccountMenuOpen(false))
   useDismissableLayer(Boolean(projectMenu), (target) => target instanceof Element && Boolean(target.closest('.project-group')), () => setProjectMenu(null))
   useDismissableLayer(projectSortMenuOpen, (target) => target instanceof Element && Boolean(target.closest('.sidebar__sort-menu, .sidebar__sort-toggle')), () => setProjectSortMenuOpen(false))
   useDismissableLayer(Boolean(sessionMenu), (target) => target instanceof Element && Boolean(target.closest('.session-row-wrap, .session-row__menu')), () => setSessionMenu(null))
@@ -232,6 +241,13 @@ function SidebarView({ projects, sessions, childRoster, activeProjectId, activeS
   const archiveSession = (session: SessionRecord) => {
     if (session.status === 'running' || session.status === 'waiting') setArchiveRunningTarget(session)
     else void onArchiveSession(session)
+  }
+  const isEntryHidden = (entryId: ClaudeSidebarEntryId) => claudePrefs.hiddenSidebarEntries.includes(entryId)
+  const toggleSidebarEntry = (entryId: ClaudeSidebarEntryId) => {
+    const next = isEntryHidden(entryId)
+      ? claudePrefs.hiddenSidebarEntries.filter((id) => id !== entryId)
+      : [...claudePrefs.hiddenSidebarEntries, entryId]
+    updateClaudePrefs({ hiddenSidebarEntries: next })
   }
   const normalized = query.trim().toLowerCase()
   const allCollapsed = projects.length > 0 && projects.every((project) => collapsed[project.id] === true)
@@ -251,6 +267,7 @@ function SidebarView({ projects, sessions, childRoster, activeProjectId, activeS
             title={t('sidebar.harnessSwitcher', { name: HARNESS_PRODUCT_NAMES[activeHarness] })}
             onClick={() => setHarnessMenuOpen((open) => !open)}
           >
+            <ClaudeBrandLockup brand={claudePrefs.brand} />
             <HarnessMark harness={activeHarness} size={24} />
             <span className="brand-switcher__name"><strong>{HARNESS_SHORT_NAMES[activeHarness]}</strong><small>{t('sidebar.work')}</small></span>
             <ChevronDown size={12} aria-hidden="true" />
@@ -271,6 +288,27 @@ function SidebarView({ projects, sessions, childRoster, activeProjectId, activeS
                     {harness === activeHarness ? <Check size={13} aria-hidden="true" /> : null}
                   </button>
               ))}
+              <hr className="dsh-claude-menu-divider" />
+              <button
+                type="button"
+                role="menuitem"
+                className={claudePrefs.brand === 'claude' ? 'is-active' : ''}
+                onClick={() => { updateClaudePrefs({ brand: 'claude' }); setHarnessMenuOpen(false) }}
+              >
+                <ClaudeStarburstMark size={16} />
+                <span className="brand-switcher__option"><strong>Claude Brand</strong></span>
+                {claudePrefs.brand === 'claude' ? <Check size={13} aria-hidden="true" /> : null}
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={claudePrefs.brand === 'deepseek' ? 'is-active' : ''}
+                onClick={() => { updateClaudePrefs({ brand: 'deepseek' }); setHarnessMenuOpen(false) }}
+              >
+                <DeepSeekWhaleMark size={16} />
+                <span className="brand-switcher__option"><strong>DeepSeek Brand</strong></span>
+                {claudePrefs.brand === 'deepseek' ? <Check size={13} aria-hidden="true" /> : null}
+              </button>
             </div>
           ) : null}
         </div>
@@ -281,8 +319,13 @@ function SidebarView({ projects, sessions, childRoster, activeProjectId, activeS
       </div>
 
       <nav className="sidebar__primary" aria-label={t('nav.primary')}>
-        <button type="button" title={t('nav.newSessionShortcut', { shortcut: newSessionShortcut })} onClick={() => onNewSession()}><NotebookPen size={15} /><span>{t('nav.newSession')}</span><kbd>{newSessionShortcut}</kbd></button>
-        <button type="button" title={t('common.search')} onClick={() => { if (searchOpen) setQuery(''); setSearchOpen((open) => !open); window.setTimeout(() => document.getElementById('session-search')?.focus(), 0) }} className={searchOpen ? 'is-active' : ''}><Search size={15} /><span>{t('common.search')}</span></button>
+        <button type="button" className="dsh-claude-new-session-btn" title={t('nav.newSessionShortcut', { shortcut: newSessionShortcut })} onClick={() => onNewSession()}>
+          <span className="dsh-claude-plus-chip" aria-hidden="true">+</span>
+          <NotebookPen size={15} />
+          <span>{t('nav.newSession')}</span>
+          <kbd>{newSessionShortcut}</kbd>
+        </button>
+        <button type="button" data-dsh-entry="search" data-dsh-hidden={isEntryHidden('search') ? 'true' : undefined} title={t('common.search')} onClick={() => { if (searchOpen) setQuery(''); setSearchOpen((open) => !open); window.setTimeout(() => document.getElementById('session-search')?.focus(), 0) }} className={searchOpen ? 'is-active' : ''}><Search size={15} /><span>{t('common.search')}</span></button>
         {searchOpen ? (
           <div className="sidebar-search">
             <Search size={13} />
@@ -290,10 +333,64 @@ function SidebarView({ projects, sessions, childRoster, activeProjectId, activeS
             {query ? <button type="button" title={t('sidebar.clearSearch')} aria-label={t('sidebar.clearSearch')} onClick={() => setQuery('')}>×</button> : null}
           </div>
         ) : null}
-        <button type="button" title={t('nav.projects')} className={activeView === 'projects' ? 'is-active' : ''} onClick={() => onNavigate('projects')}><Folder size={15} /><span>{t('nav.projects')}</span></button>
-        <button type="button" title={t('nav.activity')} className={activeView === 'activity' ? 'is-active' : ''} onClick={() => onNavigate('activity')}><Bell size={15} /><span>{t('nav.activity')}</span>{unreadCount ? <span className="nav-count">{unreadCount}</span> : null}</button>
-        <button type="button" title={t('nav.scheduled')} className={activeView === 'scheduled' ? 'is-active' : ''} onClick={() => onNavigate('scheduled')}><CalendarClock size={15} /><span>{t('nav.scheduled')}</span></button>
-        <button type="button" title={t('nav.capabilities')} className={activeView === 'plugins' ? 'is-active' : ''} onClick={() => onNavigate('plugins')}><PackageOpen size={15} /><span>{t('nav.capabilities')}</span></button>
+        <button type="button" data-dsh-entry="projects" data-dsh-hidden={isEntryHidden('projects') ? 'true' : undefined} title={t('nav.projects')} className={activeView === 'projects' ? 'is-active' : ''} onClick={() => onNavigate('projects')}><Folder size={15} /><span>{t('nav.projects')}</span></button>
+        <button type="button" data-dsh-entry="activity" data-dsh-hidden={isEntryHidden('activity') ? 'true' : undefined} title={t('nav.activity')} className={activeView === 'activity' ? 'is-active' : ''} onClick={() => onNavigate('activity')}><Bell size={15} /><span>{t('nav.activity')}</span>{unreadCount ? <span className="nav-count">{unreadCount}</span> : null}</button>
+        <button type="button" data-dsh-entry="scheduled" data-dsh-hidden={isEntryHidden('scheduled') ? 'true' : undefined} title={t('nav.scheduled')} className={activeView === 'scheduled' ? 'is-active' : ''} onClick={() => onNavigate('scheduled')}><CalendarClock size={15} /><span>{t('nav.scheduled')}</span></button>
+        <button type="button" data-dsh-entry="plugins" data-dsh-hidden={isEntryHidden('plugins') ? 'true' : undefined} title={t('nav.capabilities')} className={activeView === 'plugins' ? 'is-active' : ''} onClick={() => onNavigate('plugins')}><PackageOpen size={15} /><span>{t('nav.capabilities')}</span></button>
+        <div className="dsh-claude-more-wrap">
+          <button
+            type="button"
+            className="dsh-claude-more-row"
+            onClick={() => setMoreMenuOpen((open) => !open)}
+          >
+            <MoreHorizontal size={15} />
+            <span>{isZh ? '更多' : 'More'}</span>
+          </button>
+          {moreMenuOpen ? (
+            <div className="dsh-claude-popover-card dsh-claude-more-popover" data-open="true" role="menu">
+              <div className="dsh-claude-popover-body">
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="dsh-claude-popover-item"
+                  onClick={() => { setMoreMenuOpen(false); onOpenPalette() }}
+                >
+                  <span className="dsh-claude-popover-item-icon"><Search size={14} /></span>
+                  <span className="dsh-claude-popover-item-text">{t('nav.commands')}</span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="dsh-claude-popover-item"
+                  onClick={() => { setMoreMenuOpen(false); onNavigate('activity') }}
+                >
+                  <span className="dsh-claude-popover-item-icon"><Bell size={14} /></span>
+                  <span className="dsh-claude-popover-item-text">{t('nav.activity')}</span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="dsh-claude-popover-item"
+                  onClick={() => { setMoreMenuOpen(false); onNavigate('scheduled') }}
+                >
+                  <span className="dsh-claude-popover-item-icon"><CalendarClock size={14} /></span>
+                  <span className="dsh-claude-popover-item-text">{t('nav.scheduled')}</span>
+                </button>
+              </div>
+              <div className="dsh-claude-popover-footer">
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="dsh-claude-popover-item"
+                  onClick={() => { setMoreMenuOpen(false); setEditSidebarOpen(true) }}
+                >
+                  <span className="dsh-claude-popover-item-icon"><Settings size={14} /></span>
+                  <span className="dsh-claude-popover-item-text">{isZh ? '编辑侧边栏' : 'Edit sidebar'}</span>
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </div>
       </nav>
 
       <div className="sidebar__scroll scroll-area">
@@ -324,6 +421,16 @@ function SidebarView({ projects, sessions, childRoster, activeProjectId, activeS
               </div>
               {!isCollapsed ? (
                 <div className="session-list">
+                  {activeProjectId === project.id && !activeSessionId && activeView === 'session' ? (
+                    <div className="session-row-wrap is-selected dsh-claude-draft-session-wrap">
+                      <button type="button" className="session-row dsh-claude-draft-session" onClick={() => onNewSession(project)}>
+                        <span className="session-status-mark session-status-mark--idle"><span /></span>
+                        <span className="session-row__text">
+                          <span className="session-row__title">{t('nav.newSession')}</span>
+                        </span>
+                      </button>
+                    </div>
+                  ) : null}
                   {projectSessions.slice(0, sessionLimit).map((session) => (
                     <Fragment key={session.id}><div className={`session-row-wrap session-row-wrap--${session.status} ${needsAttention(session) ? 'has-attention' : ''} ${activeSessionId === session.id && activeView === 'session' ? 'is-selected' : ''}`}>
                       <button type="button" title={displayTitle(session.title)} className="session-row" onClick={() => { setSessionMenu(null); onSelectSession(session) }} onContextMenu={(event) => { event.preventDefault(); openSessionMenu(session.id, event.currentTarget) }}>
@@ -351,7 +458,78 @@ function SidebarView({ projects, sessions, childRoster, activeProjectId, activeS
       </div>
 
       <div className="sidebar__footer">
-        <button type="button" title={t('nav.commands')} onClick={onOpenPalette}><Search size={15} /><span>{t('nav.commands')}</span><kbd>{commandsShortcut}</kbd></button>
+        <div className="dsh-claude-account-wrap">
+          <button
+            type="button"
+            className="dsh-claude-account-bar"
+            onClick={() => setAccountMenuOpen((open) => !open)}
+          >
+            <span className="dsh-claude-account-avatar">{(claudePrefs.userName || 'Ada').charAt(0).toUpperCase()}</span>
+            <span className="dsh-claude-account-name">{claudePrefs.userName || 'Ada'}</span>
+            <span className="dsh-claude-account-status-dot" aria-hidden="true" />
+            <Settings size={14} className="dsh-claude-account-gear" />
+          </button>
+          {accountMenuOpen ? (
+            <div className="dsh-claude-popover-card dsh-claude-account-popover" data-open="true" role="menu">
+              <div className="dsh-claude-popover-header">
+                <span className="dsh-claude-account-avatar">{(claudePrefs.userName || 'Ada').charAt(0).toUpperCase()}</span>
+                <div className="dsh-claude-popover-header-text">
+                  <div className="dsh-claude-popover-header-name">{claudePrefs.userName || 'Ada'}</div>
+                  <div className="dsh-claude-popover-header-sub">
+                    {claudePrefs.brand === 'deepseek' ? 'DeepSeek Style · Max' : 'Claude Code Style · Max'}
+                  </div>
+                </div>
+              </div>
+              <div className="dsh-claude-popover-body">
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="dsh-claude-popover-item"
+                  onClick={() => updateClaudePrefs({ brand: claudePrefs.brand === 'claude' ? 'deepseek' : 'claude' })}
+                >
+                  <span className="dsh-claude-popover-item-icon">
+                    {claudePrefs.brand === 'claude' ? <ClaudeStarburstMark size={14} /> : <DeepSeekWhaleMark size={14} />}
+                  </span>
+                  <span className="dsh-claude-popover-item-text">
+                    {isZh ? `切换品牌 (${claudePrefs.brand === 'claude' ? 'Claude → DeepSeek' : 'DeepSeek → Claude'})` : `Switch brand (${claudePrefs.brand === 'claude' ? 'Claude → DeepSeek' : 'DeepSeek → Claude'})`}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="dsh-claude-popover-item"
+                  onClick={() => updateClaudePrefs({ homeLayout: claudePrefs.homeLayout === 'studio' ? 'classic' : 'studio' })}
+                >
+                  <span className="dsh-claude-popover-item-icon"><NotebookPen size={14} /></span>
+                  <span className="dsh-claude-popover-item-text">
+                    {isZh ? `主页布局: ${claudePrefs.homeLayout === 'studio' ? 'Studio 仪表盘' : '经典主页'}` : `Home layout: ${claudePrefs.homeLayout}`}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="dsh-claude-popover-item"
+                  onClick={() => { setAccountMenuOpen(false); onOpenPalette() }}
+                >
+                  <span className="dsh-claude-popover-item-icon"><Search size={14} /></span>
+                  <span className="dsh-claude-popover-item-text">{t('nav.commands')}</span>
+                </button>
+              </div>
+              <div className="dsh-claude-popover-footer">
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="dsh-claude-popover-item"
+                  onClick={() => { setAccountMenuOpen(false); onNavigate('settings') }}
+                >
+                  <span className="dsh-claude-popover-item-icon"><Settings size={14} /></span>
+                  <span className="dsh-claude-popover-item-text">{t('nav.settings')}</span>
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+        <button type="button" className="sidebar__footer-legacy-btn" title={t('nav.commands')} onClick={onOpenPalette}><Search size={15} /><span>{t('nav.commands')}</span><kbd>{commandsShortcut}</kbd></button>
         {updateVisible ? (
           <>
             <span className="sr-only" role="status" aria-live="polite">{updateAnnouncement(updateState, t)}</span>
@@ -368,8 +546,41 @@ function SidebarView({ projects, sessions, childRoster, activeProjectId, activeS
             </button>
           </>
         ) : null}
-        <button type="button" title={t('nav.settings')} className={activeView === 'settings' ? 'is-active' : ''} onClick={() => onNavigate('settings')}><Settings size={15} /><span>{t('nav.settings')}</span><kbd>{settingsShortcut}</kbd></button>
+        <button type="button" className={`sidebar__footer-legacy-btn ${activeView === 'settings' ? 'is-active' : ''}`} title={t('nav.settings')} onClick={() => onNavigate('settings')}><Settings size={15} /><span>{t('nav.settings')}</span><kbd>{settingsShortcut}</kbd></button>
       </div>
+      {editSidebarOpen ? (
+        <Modal
+          title={isZh ? '编辑侧边栏' : 'Edit sidebar'}
+          onClose={() => setEditSidebarOpen(false)}
+          footer={
+            <button type="button" className="button button--primary" onClick={() => setEditSidebarOpen(false)}>
+              {isZh ? '完成' : 'Done'}
+            </button>
+          }
+        >
+          <div className="dsh-claude-sidebar-editor-list">
+            {([
+              { id: 'plugins' as const, label: t('nav.capabilities') },
+              { id: 'search' as const, label: t('common.search') },
+              { id: 'projects' as const, label: t('nav.projects') },
+              { id: 'activity' as const, label: t('nav.activity') },
+              { id: 'scheduled' as const, label: t('nav.scheduled') },
+            ]).map((item) => {
+              const visible = !isEntryHidden(item.id)
+              return (
+                <label key={item.id} className="dsh-claude-sidebar-editor-row">
+                  <input
+                    type="checkbox"
+                    checked={visible}
+                    onChange={() => toggleSidebarEntry(item.id)}
+                  />
+                  <span>{item.label}</span>
+                </label>
+              )
+            })}
+          </div>
+        </Modal>
+      ) : null}
       {copyError || copied ? <div className="toast" role="status">{copyError ?? t('transcript.copyAction.copied')}</div> : null}
       {renameTarget ? <Modal title="Rename session" onClose={() => setRenameTarget(null)} footer={<><button type="button" className="button" onClick={() => setRenameTarget(null)}>Cancel</button><button type="button" className="button button--primary" disabled={!renameValue.trim()} onClick={() => { const target = renameTarget; const title = renameValue.trim(); setRenameTarget(null); void onRenameSession(target, title) }}>Rename</button></>}><label className="field"><span>Session name</span><input autoFocus value={renameValue} maxLength={200} onChange={(event) => setRenameValue(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && renameValue.trim()) { event.preventDefault(); const target = renameTarget; const title = renameValue.trim(); setRenameTarget(null); void onRenameSession(target, title) } }}/></label></Modal> : null}
       {removeTarget ? <Modal title="Remove project" onClose={() => setRemoveTarget(null)} footer={<><button type="button" className="button" onClick={() => setRemoveTarget(null)}>Cancel</button><button type="button" className="button button--danger" onClick={() => { const target = removeTarget; setRemoveTarget(null); onRemoveProject(target) }}>Remove</button></>}><p>Remove “{removeTarget.name}” from {HARNESS_PRODUCT_NAMES[activeHarness]}? The folder and saved sessions will not be deleted.</p></Modal> : null}
